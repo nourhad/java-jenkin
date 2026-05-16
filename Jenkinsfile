@@ -1,21 +1,20 @@
 pipeline {
     agent any
     
-    parameters {
-        string(name: 'PROJECT_PATH', defaultValue: '/home/java-jenkin', description: 'Chemin du projet')
-        choice(name: 'MAVEN_GOAL', choices: ['test', 'clean test', 'package'], description: 'Goal Maven')
-    }
-    
     stages {
         stage('Exécution Maven') {
             steps {
-                dir(params.PROJECT_PATH) {
-                    sh "mvn ${params.MAVEN_GOAL}"
-                }
+                sh "mvn clean test package -X"
             }
             post {
                 always {
-                    junit '**/target/surefire-reports/*.xml'
+                    junit testResults: '**/target/surefire-reports/*.xml', allowEmptyResults: true
+                }
+                success {
+                    archiveArtifacts artifacts: '**/target/*.jar', allowEmptyArchive: true
+                }
+                failure {
+                    echo "Maven build failed!"
                 }
             }
         }
